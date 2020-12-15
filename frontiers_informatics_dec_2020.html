@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Applying Data Science Methods to the EHR</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Sierra Davis" />
+    <meta name="author" content="Children’s Mercy Research Institute" />
+    <meta name="date" content="2020-12-11" />
+    <link href="libs/tile-view/tile-view.css" rel="stylesheet" />
+    <script src="libs/tile-view/tile-view.js"></script>
+    <link href="libs/tachyons/tachyons.min.css" rel="stylesheet" />
+    <link href="libs/panelset/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset/panelset.js"></script>
+    <link href="libs/font-awesome/css/fontawesome-all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+
+
+class: title, middle, inverse
+
+# Applying Data Science Methods to the EHR
+### Frontiers Informatics December Meetup
+
+.b[Sierra Davis] &lt;br&gt;
+Children's Research Institute &lt;br&gt;
+([<i class="fas  fa-envelope "></i>](mailto:ssdavis@cmh.edu) [ssdavis@cmh.edu](mailto:ssdavis@cmh.edu) | [<i class="fab  fa-twitter "></i>](https://twitter.com/__sierradavis)  [__sierradavis](https://twitter.com/__sierradavis))
+
+
+---
+
+&lt;img src="img/ds_fig.png" width="85%" /&gt;
+medium.com
+
+---
+
+# Data Science Projects
+
+.center[
+&lt;img src="img/ques.jpg" width="50%" /&gt;
+]
+---
+
+
+# Outline
+
+.large[
+
+✅ .green[Data] Resources
+]
+--
+.large[
+
+✅ .green[Data] Science Methods
+]
+--
+.large[
+✅ .green[Data] Science Tools
+
+]
+
+---
+
+class: center, middle
+
+.large[
+
+.green[Data] Resources
+
+]
+
+---
+
+# Types of EHR
+
+.pull-left[
+.bg-light-gray.b--green.ba.bw2.br3.shadow-5.ph4.mt5.o-85.f5[
+.b[Identified Data]
+  - One Health System
+  - Text Notes available
+  - IRB Approval Requirement
+  &lt;br&gt;
+  &lt;br&gt;
+  ]
+  .center[.b[Cerner Millenium]]
+  &lt;br&gt;
+- .b[1.8 Million Patients]
+- .b[14 Million Encounters]
+]
+
+--
+.pull-right[
+.bg-light-gray.b--green.ba.bw2.br3.shadow-5.ph4.mt5.o-85.f5[
+.b[De-Identified Data]
+  - Multiple Health Systems
+  - HIPAA Compliant
+  - Non Human Subject Research
+  ]
+.center[.b[Cerner Health Facts]]
+&lt;br&gt;
+- .b[69 Million Patients]
+- .b[487 Million Encounters]
+- .b[85 Facilities]
+]
+
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+
+---
+
+class: center, middle
+
+&lt;img src="img/PatientEncounters.png" width="95%" /&gt;
+
+
+---
+
+class: center, middle
+
+.largeish[
+Goal is to develop smaller .b[.red[manageable]] datasets from large scale EHR data to analyze, visualize and model.
+]
+
+---
+
+class: center, middle
+
+.large[
+
+.green[Data] Science Methods
+
+]
+
+---
+
+class: center, middle
+
+&lt;img src="img/data-science.png" width="95%" /&gt;
+
+
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+
+Hadley Wickham
+
+---
+
+
+class: inverse, center, middle
+
+.largeish[
+Can .b[address level] pediatric data be used to investigate the relationship between household environments and health outcomes?
+]
+
+---
+
+
+# KC-HEART
+
+
+&lt;img src="img/gis_article.png" width="95%" /&gt;
+
+&lt;br&gt;
+&lt;br&gt;
+
+---
+
+.panelset[
+.panel[.panel-name[Data Extraction]
+
+- Data Request with IRB Approval submitted using REDCap Survey
+
+- Asthma and Well Child Visits
+
+- Address Level Data from 2000-2015
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;img src="img/biz_object.jpg" width="85%" /&gt;
+]
+
+.panel[.panel-name[Visualize]
+&lt;img src="img/gis_vis.png" width="95%" /&gt;
+&lt;br&gt;
+&lt;img src="img/figure_cap.png" width="95%" /&gt;
+]
+
+]
+
+---
+
+
+
+class: inverse, center, middle
+
+.largeish[
+Can we use data from the EHR to reveal patterns and variations in .b[pediatric leukemia] patients that can be attributable to the organization and among patients?
+]
+
+---
+
+.panelset[
+.panel[.panel-name[Data Extraction]
+
+- We identified a cohort of patients with ALL using ICD-9 and ICD-10 diagnosis codes and collected all available .b[.blue[timestamped]] encounters for each patient.
+- Convert encounter-centric data architecture into a person-centric temporal design.
+
+.pull-left[
+.remark-code[
+``` r
+library(DBI)         
+library(odbc)        
+library(dplyr) 
+library(dbplyr) 
+
+SERVER   &lt;- "servername"
+VERSION  &lt;- 2016    
+DATABASE &lt;- paste0("DBNAME", VERSION)
+CAPTION  &lt;- paste("EMR Data", VERSION)
+
+EMR &lt;- dbConnect(odbc(),
+                         Driver="SQL Server",
+                         Server=SERVER,
+                         Database=DATABASE,
+                         UID=Sys.getenv("EMR_UID"),
+                         PWD=Sys.getenv("EMR_PWD"))
+                         
+encounter         &lt;- tbl(EMR, in_schema("dbo", "ENCOUNTER"))
+diagnosis         &lt;- tbl(EMR, in_schema("dbo", "DIAGNOSIS"))
+lab               &lt;- tbl(EMR, in_schema("dbo", "LAB"))
+all_diagnosis_encounters &lt;-
+  inner_join(encounter, diagnosis, by="encounter_id")   %&gt;%
+  select(patient_key
+         encounter_id,
+         diagnosis_code,
+         encounter_type,
+         admit_date,
+         discharge_date,
+         age,
+         gender,
+         race,
+         ethncity,
+         health_system,
+         region)                    %&gt;%
+  filter(diagnosis_code %in% c('240.0','240.01'))
+  collect()
+all_lab_encounters &lt;-
+  left_join(all_diagnosis_encounters, lab, by="encounter_id")   %&gt;%
+  select(patient_key
+         encounter_id,
+         lab_date
+         loinc_code,
+         lab_desc,
+         lab_result)                    %&gt;%
+  filter(loinc_code %in% c('xxxx','xxxx'))
+  collect()
+```
+]
+]
+
+.pull-right[
+&lt;img src="img/tables_extract.jpeg" width="125%" /&gt;
+]
+]
+
+.panel[.panel-name[Descriptive Statistics]
+&lt;br&gt;
+&lt;br&gt;
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#bsenrlufco .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: small;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#bsenrlufco .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#bsenrlufco .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#bsenrlufco .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#bsenrlufco .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#bsenrlufco .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#bsenrlufco .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#bsenrlufco .gt_group_heading {
+  padding: 1px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#bsenrlufco .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#bsenrlufco .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#bsenrlufco .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#bsenrlufco .gt_row {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#bsenrlufco .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#bsenrlufco .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bsenrlufco .gt_first_summary_row {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bsenrlufco .gt_first_grand_summary_row {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#bsenrlufco .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 1px;
+}
+
+#bsenrlufco .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bsenrlufco .gt_sourcenote {
+  font-size: 90%;
+  padding: 1px;
+}
+
+#bsenrlufco .gt_left {
+  text-align: left;
+}
+
+#bsenrlufco .gt_center {
+  text-align: center;
+}
+
+#bsenrlufco .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#bsenrlufco .gt_font_normal {
+  font-weight: normal;
+}
+
+#bsenrlufco .gt_font_bold {
+  font-weight: bold;
+}
+
+#bsenrlufco .gt_font_italic {
+  font-style: italic;
+}
+
+#bsenrlufco .gt_super {
+  font-size: 65%;
+}
+
+#bsenrlufco .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="bsenrlufco" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"><strong>Characteristic</strong></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>Overall</strong>, N = 14,261<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>ALL</strong>, N = 11,244<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>ALL/AML</strong>, N = 983<sup class="gt_footnote_marks">1</sup></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1"><strong>AML</strong>, N = 2,034<sup class="gt_footnote_marks">1</sup></th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Age</td>
+      <td class="gt_row gt_center">8 (4, 13)</td>
+      <td class="gt_row gt_center">8 (4, 13)</td>
+      <td class="gt_row gt_center">7 (3, 13)</td>
+      <td class="gt_row gt_center">9 (3, 14)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Encounters</td>
+      <td class="gt_row gt_center">2 (1, 16)</td>
+      <td class="gt_row gt_center">2 (1, 15)</td>
+      <td class="gt_row gt_center">39 (10, 94)</td>
+      <td class="gt_row gt_center">1 (1, 3)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="font-weight: bold;">Area of Care</td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+      <td class="gt_row gt_center"></td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Rural</td>
+      <td class="gt_row gt_center">5,151 (36%)</td>
+      <td class="gt_row gt_center">4,448 (40%)</td>
+      <td class="gt_row gt_center">297 (30%)</td>
+      <td class="gt_row gt_center">406 (20%)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="text-align: left; text-indent: 10px;">Urban</td>
+      <td class="gt_row gt_center">9,110 (64%)</td>
+      <td class="gt_row gt_center">6,796 (60%)</td>
+      <td class="gt_row gt_center">686 (70%)</td>
+      <td class="gt_row gt_center">1,628 (80%)</td>
+    </tr>
+  </tbody>
+  
+  <tfoot>
+    <tr class="gt_footnotes">
+      <td colspan="5">
+        <p class="gt_footnote">
+          <sup class="gt_footnote_marks">
+            <em>1</em>
+          </sup>
+           
+          Statistics presented: Median (IQR); n (%)
+          <br />
+        </p>
+      </td>
+    </tr>
+  </tfoot>
+</table></div>
+]
+
+.panel[.panel-name[Visualization]
+- We identified ALL patients with over 180,000 encounters from health systems
+.center[
+&lt;img src="img/table1.png" width="45%" /&gt;
+]
+&lt;br&gt;
+- Timelines were developed to compare treatment among patients
+&lt;br&gt;
+.center[
+&lt;img src="frontiers_informatics_dec_2020_files/figure-html/unnamed-chunk-12-1.png" width="99%" /&gt;
+]
+
+&lt;br&gt;
+Davis, S., Wood, N., Glynn, E., Lewing, K., Caragea, D., Noel-MacDonnell, J., and Hoffman, M. (2020).
+Comparing the Treatment Regimen of Newly Diagnosed Pediatric Leukemia Patients
+]
+
+
+.panel[.panel-name[Results]
+ 
+# Lumbar Punctures
+.center[
+&lt;img src="img/lp.jpg" width="95%" /&gt;
+]
+]
+
+.panel[.panel-name[Modeling]
+
+# Future Work
+
+.largeish[
+- Identify Subtle Patterns using Cluster Analysis
+]
+.largeish[
+- Deep Learning
+]
+
+]
+
+]
+
+
+---
+
+
+
+class: center, middle
+
+.large[
+
+.green[Data] Science Tools
+
+]
+
+---
+
+# Data Science Tools
+
+&lt;img src="img/tools.png" width="95%" /&gt;
+
+---
+
+# Reproducible Research
+
+&lt;img src="img/reproducible_research.jpg" width="95%" /&gt;
+
+---
+
+# Colaborative Relationships
+.pull-left[
+.largeish[
+- Understanding Context
+]
+.largeish[
+- Data Interpretation
+]
+.largeish[
+- Finding Data
+]
+]
+
+
+.pull-right[
+&lt;img src="img/teamwork.png" width="99%" /&gt;
+]
+---
+
+
+# Conclusion
+.large[
+
+✅ .green[Data] Resources
+]
+
+.large[
+
+✅ .green[Data] Science Methods
+]
+
+.large[
+✅ .green[Data] Science Tools
+
+]
+---
+class: middle, inverse
+
+.large[Thank You]
+
+
+---
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
